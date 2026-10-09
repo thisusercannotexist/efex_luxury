@@ -31,6 +31,16 @@ export const Dashboard = () => {
             <p style="font-size: 1.1rem;">${user.location || 'N/A'}</p>
         </div>
     </div>
+
+    ${user.role === 'admin' ? `
+      <div style="margin-top: 1.5rem; padding: 1.25rem 1.5rem; background: rgba(212, 175, 55, 0.1); border: 1px solid var(--color-gold); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; flex-wrap: gap: 1rem;">
+        <div>
+          <h4 style="color: var(--color-gold); margin: 0 0 0.25rem 0;">👑 Store Administrator Access</h4>
+          <p style="margin: 0; font-size: 0.85rem; color: var(--color-gray-300);">You have master privileges to manage products, view sales metrics, and fulfill orders.</p>
+        </div>
+        <a href="/admin" data-link class="btn btn-primary" style="padding: 0.6rem 1.25rem; font-size: 0.85rem;">Admin Console &rarr;</a>
+      </div>
+    ` : ''}
   `;
 
   if (user) {
@@ -94,6 +104,17 @@ export const Dashboard = () => {
 
   renderOrders();
   container.appendChild(ordersList);
+
+  container.addEventListener('click', (e) => {
+    const link = e.target.closest('[data-link]');
+    if (link) {
+      e.preventDefault();
+      const href = link.getAttribute('href');
+      if (href) {
+        import('../main.js').then(m => m.navigate(href));
+      }
+    }
+  });
 
   return container;
 };

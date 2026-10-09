@@ -1,6 +1,7 @@
 import './styles/main.css';
 import './styles/home.css';
 import './styles/contact.css';
+import './styles/admin.css';
 import { state, subscribe } from './state/store.js';
 import { Home } from './pages/Home.js';
 import { Auth } from './pages/Auth.js';

@@ -142,23 +142,167 @@ const INITIAL_PRODUCTS = [
   }
 ];
 
+export const DEFAULT_ADMIN = {
+  email: 'admin@admin.com',
+  password: 'admin',
+  name: 'Store Administrator',
+  role: 'admin',
+  phone: '+234 800 000 0000',
+  location: 'Efex Luxury Headquarters, Victoria Island, Lagos'
+};
+
+const DEMO_CUSTOMERS = [
+  {
+    email: 'b.adeleke@luxury.ng',
+    password: 'password123',
+    name: 'Babajide Adeleke',
+    role: 'user',
+    phone: '+234 802 345 6789',
+    location: 'Plot 14, Admiralty Way, Lekki Phase 1, Lagos'
+  },
+  {
+    email: 'chioma.o@gmail.com',
+    password: 'password123',
+    name: 'Chioma Okonkwo',
+    role: 'user',
+    phone: '+234 813 908 1122',
+    location: '25 Bourdillon Road, Ikoyi, Lagos'
+  },
+  {
+    email: 'seun.bakare@outlook.com',
+    password: 'password123',
+    name: 'Oluwaseun Bakare',
+    role: 'user',
+    phone: '+234 705 554 3210',
+    location: 'Maitama District, Abuja FCT'
+  }
+];
+
+export const INITIAL_ORDERS = [
+  {
+    id: 'ORD-9842',
+    customer: {
+      name: 'Babajide Adeleke',
+      email: 'b.adeleke@luxury.ng',
+      phone: '+234 802 345 6789',
+      address: 'Plot 14, Admiralty Way, Lekki Phase 1, Lagos'
+    },
+    date: '2026-10-06',
+    total: '₦370,000',
+    totalAmount: 370000,
+    status: 'Processing',
+    items: [
+      { name: 'Royal Blue Agbada', qty: 2, price: 185000, image: '/images/products/nigerian_agbada_men_1768240346228.png' }
+    ]
+  },
+  {
+    id: 'ORD-9755',
+    customer: {
+      name: 'Chioma Okonkwo',
+      email: 'chioma.o@gmail.com',
+      phone: '+234 813 908 1122',
+      address: '25 Bourdillon Road, Ikoyi, Lagos'
+    },
+    date: '2026-10-05',
+    total: '₦240,000',
+    totalAmount: 240000,
+    status: 'Shipped',
+    items: [
+      { name: 'Ankara Maxi Gown', qty: 1, price: 95000, image: '/images/products/nigerian_ankara_women_1768240362466.png' },
+      { name: 'Iro and Buba Purple Gold', qty: 1, price: 145000, image: '/images/products/nigerian_iro_buba_women_1768240426603.png' }
+    ]
+  },
+  {
+    id: 'ORD-9610',
+    customer: {
+      name: 'Oluwaseun Bakare',
+      email: 'seun.bakare@outlook.com',
+      phone: '+234 705 554 3210',
+      address: 'Maitama District, Abuja FCT'
+    },
+    date: '2026-10-03',
+    total: '₦450,000',
+    totalAmount: 450000,
+    status: 'Delivered',
+    items: [
+      { name: 'Onyx Gold Watch', qty: 1, price: 450000, image: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=800&auto=format&fit=crop' }
+    ]
+  },
+  {
+    id: 'ORD-9502',
+    customer: {
+      name: 'Amina Danjuma',
+      email: 'amina.d@danluxury.com',
+      phone: '+234 809 123 9988',
+      address: 'Garki 2, Abuja FCT'
+    },
+    date: '2026-10-02',
+    total: '₦125,000',
+    totalAmount: 125000,
+    status: 'Pending',
+    items: [
+      { name: 'Senator Kaftan White Gold', qty: 1, price: 125000, image: '/images/products/nigerian_kaftan_men_1768240409013.png' }
+    ]
+  }
+];
+
 const defaultState = {
   user: null, // Current logged in user
-  users: [], // Registered users database
+  users: [DEFAULT_ADMIN, ...DEMO_CUSTOMERS], // Registered users database
   cart: [], // { productId, qty }
-  products: INITIAL_PRODUCTS,
-  orders: [], // User orders
+  products: INITIAL_PRODUCTS.map((p, idx) => ({
+    ...p,
+    stock: p.stock || (15 - (idx % 8)),
+    sku: p.sku || `EFX-${p.department ? p.department.slice(0, 3).toUpperCase() : 'ACC'}-${100 + p.id}`
+  })),
+  orders: INITIAL_ORDERS, // User orders
   cms: {
     heroText: "Experience the Future of Luxury Fashion",
     heroSubText: "Curated for the bold. Authentic. Timeless.",
+    announcement: "Worldwide Shipping Available | Bespoke Nigerian Couture",
+    contactPhone: "+234 800 000 0000",
+    contactEmail: "concierge@efexluxury.com"
   }
 };
 
 const loadState = () => {
   const stored = localStorage.getItem(STORAGE_KEY);
-  // Merge defaults if products missing (migration hack for dev)
   const loaded = stored ? JSON.parse(stored) : defaultState;
-  if (!loaded.products || loaded.products.length === 0) loaded.products = INITIAL_PRODUCTS;
+
+  // Ensure products
+  if (!loaded.products || loaded.products.length === 0) {
+    loaded.products = defaultState.products;
+  } else {
+    loaded.products = loaded.products.map((p, idx) => ({
+      ...p,
+      stock: typeof p.stock === 'number' ? p.stock : (15 - (idx % 8)),
+      sku: p.sku || `EFX-${p.department ? p.department.slice(0, 3).toUpperCase() : 'ACC'}-${100 + (p.id || idx)}`
+    }));
+  }
+
+  // Ensure users list contains the guaranteed default admin
+  if (!loaded.users || !Array.isArray(loaded.users) || loaded.users.length === 0) {
+    loaded.users = [DEFAULT_ADMIN, ...DEMO_CUSTOMERS];
+  } else {
+    const adminIdx = loaded.users.findIndex(u => u.email && u.email.toLowerCase() === DEFAULT_ADMIN.email);
+    if (adminIdx === -1) {
+      loaded.users.unshift(DEFAULT_ADMIN);
+    } else {
+      loaded.users[adminIdx].password = DEFAULT_ADMIN.password;
+      loaded.users[adminIdx].role = 'admin';
+    }
+  }
+
+  // Ensure orders list has sample data if empty
+  if (!loaded.orders || !Array.isArray(loaded.orders) || loaded.orders.length === 0) {
+    loaded.orders = INITIAL_ORDERS;
+  }
+
+  // Ensure CMS
+  if (!loaded.cms) {
+    loaded.cms = defaultState.cms;
+  }
+
   return loaded;
 };
 
@@ -214,32 +358,56 @@ export const { state, subscribe } = createStore();
 // Actions
 export const actions = {
   register: (email, password, phone, location) => {
-    if (state.users.find(u => u.email === email)) {
-      throw new Error('User already exists');
+    const cleanEmail = email.trim().toLowerCase();
+    if (state.users.find(u => u.email.toLowerCase() === cleanEmail)) {
+      throw new Error('An account with this email already exists.');
     }
     const newUser = { 
-      email, 
+      email: cleanEmail, 
       password, 
-      phone, 
-      location,
-      name: email.split('@')[0], 
+      phone: phone || '', 
+      location: location || '',
+      name: cleanEmail.split('@')[0], 
       role: 'user' 
     };
     state.users.push(newUser);
     state.user = newUser; // Auto login
-    saveState(state); // Force save for array push
+    saveState(state);
+    listeners.forEach(cb => cb(state));
     return newUser;
   },
 
   login: (email, password) => {
-    const user = state.users.find(u => u.email === email && u.password === password);
-    if (!user) throw new Error('Invalid credentials');
+    const cleanEmail = email.trim().toLowerCase();
+    
+    // Explicit Default Admin match check
+    if (cleanEmail === DEFAULT_ADMIN.email && password === DEFAULT_ADMIN.password) {
+      let adminUser = state.users.find(u => u.email.toLowerCase() === DEFAULT_ADMIN.email);
+      if (!adminUser) {
+        adminUser = { ...DEFAULT_ADMIN };
+        state.users.unshift(adminUser);
+      } else {
+        adminUser.role = 'admin';
+        adminUser.password = DEFAULT_ADMIN.password;
+      }
+      state.user = adminUser;
+      saveState(state);
+      listeners.forEach(cb => cb(state));
+      return adminUser;
+    }
+
+    const user = state.users.find(u => u.email.toLowerCase() === cleanEmail && u.password === password);
+    if (!user) throw new Error('Invalid email or password. Please verify your credentials.');
     state.user = user;
+    saveState(state);
+    listeners.forEach(cb => cb(state));
     return user;
   },
 
   logout: () => {
     state.user = null;
+    saveState(state);
+    listeners.forEach(cb => cb(state));
   },
 
   addToCart: (product) => {
@@ -249,52 +417,120 @@ export const actions = {
     } else {
       state.cart.push({ productId: product.id, qty: 1, product });
     }
-    saveState(state); // Force save
-    listeners.forEach(cb => cb(state)); // Force notify
+    saveState(state);
+    listeners.forEach(cb => cb(state));
   },
 
   removeFromCart: (productId) => {
     state.cart = state.cart.filter(item => item.productId !== productId);
+    saveState(state);
+    listeners.forEach(cb => cb(state));
   },
 
   clearCart: () => {
     state.cart = [];
+    saveState(state);
+    listeners.forEach(cb => cb(state));
   },
 
   // Admin Actions
   addProduct: (product) => {
     const newProduct = {
-        ...product,
-        // Default department if not provided
-        department: product.department || 'Accessories', 
-        id: Date.now(), // Simple unique ID
+      id: Date.now(),
+      name: product.name,
+      price: Number(product.price),
+      category: product.category || 'Traditional Wear',
+      department: product.department || 'Men',
+      stock: Number(product.stock) || 12,
+      sku: product.sku || `EFX-${(product.department || 'LUX').slice(0, 3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
+      image: product.image || '/images/products/nigerian_agbada_men_1768240346228.png',
+      featured: Boolean(product.featured)
     };
     state.products.unshift(newProduct);
+    saveState(state);
+    listeners.forEach(cb => cb(state));
+    return newProduct;
+  },
+
+  updateProduct: (id, updatedFields) => {
+    const numId = Number(id);
+    const index = state.products.findIndex(p => p.id === numId);
+    if (index !== -1) {
+      state.products[index] = { ...state.products[index], ...updatedFields };
+      saveState(state);
+      listeners.forEach(cb => cb(state));
+      return state.products[index];
+    }
+  },
+
+  deleteProduct: (id) => {
+    const numId = Number(id);
+    state.products = state.products.filter(p => p.id !== numId);
+    saveState(state);
+    listeners.forEach(cb => cb(state));
+  },
+
+  updateOrderStatus: (orderId, newStatus) => {
+    const order = state.orders.find(o => o.id === orderId);
+    if (order) {
+      order.status = newStatus;
+      saveState(state);
+      listeners.forEach(cb => cb(state));
+      return order;
+    }
+  },
+
+  deleteOrder: (orderId) => {
+    state.orders = state.orders.filter(o => o.id !== orderId);
     saveState(state);
     listeners.forEach(cb => cb(state));
   },
 
   toggleOrderStatus: (orderId) => {
-     // Admin only in real app, but simplified here
     const order = state.orders.find(o => o.id === orderId);
     if (order) {
-      order.status = order.status === 'Pending' ? 'Paid' : 'Pending';
+      const cycle = ['Pending', 'Processing', 'Shipped', 'Delivered'];
+      const currentIndex = cycle.indexOf(order.status);
+      order.status = cycle[(currentIndex + 1) % cycle.length] || 'Pending';
       saveState(state);
       listeners.forEach(cb => cb(state));
     }
   },
 
+  updateCMS: (cmsData) => {
+    state.cms = { ...state.cms, ...cmsData };
+    saveState(state);
+    listeners.forEach(cb => cb(state));
+  },
+
+  resetDemoData: () => {
+    state.products = defaultState.products;
+    state.orders = INITIAL_ORDERS;
+    state.users = [DEFAULT_ADMIN, ...DEMO_CUSTOMERS];
+    saveState(state);
+    listeners.forEach(cb => cb(state));
+  },
+
   checkout: () => {
     if (state.cart.length === 0) return;
     
+    const totalNum = state.cart.reduce((sum, item) => sum + (item.product.price * item.qty), 0);
     const newOrder = {
-      id: `ORD-${Math.floor(Math.random() * 10000)}`,
+      id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
+      customer: {
+        name: state.user?.name || 'Valued Client',
+        email: state.user?.email || 'client@efexluxury.com',
+        phone: state.user?.phone || '+234 800 000 0000',
+        address: state.user?.location || 'Lagos, Nigeria'
+      },
       date: new Date().toISOString().split('T')[0],
-      total: '₦' + state.cart.reduce((sum, item) => sum + (item.product.price * item.qty), 0).toLocaleString(),
+      total: '₦' + totalNum.toLocaleString(),
+      totalAmount: totalNum,
       status: 'Pending',
       items: state.cart.map(i => ({
         name: i.product.name,
         image: i.product.image,
+        price: i.product.price,
         qty: i.qty
       }))
     };
@@ -303,5 +539,6 @@ export const actions = {
     state.cart = [];
     saveState(state);
     listeners.forEach(cb => cb(state));
+    return newOrder;
   }
 };

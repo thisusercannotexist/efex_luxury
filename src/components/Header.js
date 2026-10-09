@@ -24,6 +24,10 @@ export const Header = (user) => {
           <div class="nav-links desktop-nav">
             <a href="/" data-link class="nav-link">Home</a>
             <a href="/shop" data-link class="nav-link">Shop</a>
+            ${state.user?.role === 'admin' 
+              ? `<a href="/admin" data-link class="nav-link" style="color: var(--color-gold); font-weight: 600;"><span style="background: rgba(212, 175, 55, 0.15); border: 1px solid rgba(212, 175, 55, 0.4); padding: 0.25rem 0.65rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.35rem;">👑 Admin Console</span></a>` 
+              : ''
+            }
             ${state.user 
               ? `<a href="/dashboard" data-link class="nav-link">My Account</a>` 
               : `<a href="/auth" data-link class="nav-link">Login</a>`
@@ -53,12 +57,12 @@ export const Header = (user) => {
       
       <!-- Mobile Menu -->
       <div class="mobile-menu" id="mobile-menu">
-        <div style="margin-bottom: 3rem;">
+        <div style="margin-bottom: 2rem;">
           <h3 style="color: var(--color-gold); font-size: 1.5rem; margin-bottom: 0.5rem;">Menu</h3>
           <p style="color: var(--color-gray-400); font-size: 0.9rem;">Navigate through our collection</p>
         </div>
         
-        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
           <a href="/" data-link class="mobile-nav-link">
             <span>Home</span>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -71,6 +75,14 @@ export const Header = (user) => {
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
           </a>
+          ${state.user?.role === 'admin' ? `
+            <a href="/admin" data-link class="mobile-nav-link" style="border-color: var(--color-gold); background: rgba(212, 175, 55, 0.08);">
+              <span style="color: var(--color-gold); font-weight: 600;">👑 Admin Console</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </a>
+          ` : ''}
           ${state.user 
             ? `<a href="/dashboard" data-link class="mobile-nav-link">
                 <span>My Account</span>
@@ -88,7 +100,7 @@ export const Header = (user) => {
         </div>
 
         ${state.user ? `
-          <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--glass-border);">
+          <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--glass-border);">
             <button id="mobile-logout-btn" class="btn btn-outline" style="width: 100%;">Logout</button>
           </div>
         ` : ''}
@@ -98,25 +110,35 @@ export const Header = (user) => {
 
     // Cart Click -> Checkout Modal
     const cartBtn = header.querySelector('#cart-btn');
-    cartBtn.addEventListener('click', () => {
-        if (state.cart.length === 0) {
-            alert("Your cart is empty.");
-        } else {
-            if (!state.user) {
-                if(confirm("Please login to checkout.")) navigate('/auth');
-                return;
-            }
-            CheckoutModal();
-        }
-    });
+    if (cartBtn) {
+      cartBtn.addEventListener('click', () => {
+          if (state.cart.length === 0) {
+              alert("Your cart is empty.");
+          } else {
+              if (!state.user) {
+                  if(confirm("Please login to checkout.")) navigate('/auth');
+                  return;
+              }
+              CheckoutModal();
+          }
+      });
+    }
 
-    // Desktop Logout
+    // Desktop & Mobile Logout
     const logoutBtn = header.querySelector('#logout-btn');
-   if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-            actions.logout();
-            navigate('/');
-        });
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+          actions.logout();
+          navigate('/');
+      });
+    }
+
+    const mobileLogoutBtn = header.querySelector('#mobile-logout-btn');
+    if (mobileLogoutBtn) {
+      mobileLogoutBtn.addEventListener('click', () => {
+        actions.logout();
+        navigate('/');
+      });
     }
 
   };

@@ -90,20 +90,33 @@ export const Auth = () => {
 
           <div>
             <label style="${labelStyle}">Email Address</label>
-            <input type="email" name="email" placeholder="client@example.com" required style="${inputStyle}" />
+            <input type="email" name="email" id="auth-email-input" placeholder="client@example.com" required style="${inputStyle}" />
           </div>
 
           <div>
             <label style="${labelStyle}">Password</label>
-            <input type="password" name="password" placeholder="••••••••" required style="${inputStyle}" />
+            <input type="password" name="password" id="auth-password-input" placeholder="••••••••" required style="${inputStyle}" />
           </div>
 
-          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 3rem; padding: 1rem;">
+          ${isLogin ? `
+            <div class="admin-demo-badge" style="margin-top: 1.5rem; margin-bottom: 0.5rem; border-color: rgba(212, 175, 55, 0.4);">
+              <div class="admin-demo-badge-title">
+                <span>👑 Admin Credentials</span>
+                <button type="button" id="fill-admin-btn" class="quick-fill-btn">Auto-Fill</button>
+              </div>
+              <div style="font-size: 0.78rem; color: var(--color-gray-300); font-family: monospace; display: flex; flex-direction: column; gap: 0.2rem;">
+                <div>Email: <strong style="color: var(--color-gold);">admin@admin.com</strong></div>
+                <div>Password: <strong style="color: var(--color-gold);">admin</strong></div>
+              </div>
+            </div>
+          ` : ''}
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 2rem; padding: 1rem;">
             ${isLogin ? 'Sign In' : 'Register'} &rarr;
           </button>
         </form>
 
-        <div style="margin-top: 2rem; text-align: center; border-top: 1px solid var(--color-black-lighter); padding-top: 2rem;">
+        <div style="margin-top: 2rem; text-align: center; border-top: 1px solid var(--color-black-lighter); padding-top: 1.5rem;">
             <p style="color: var(--color-gray-400); font-size: 0.9rem;">
                 ${isLogin ? "Don't have an account?" : "Already have an account?"}
                 <button id="toggle-btn" style="background: none; border: none; color: var(--color-gold); font-weight: bold; margin-left: 0.5rem; cursor: pointer;">
@@ -120,7 +133,22 @@ export const Auth = () => {
     const form = formSide.querySelector('#auth-form');
     const toggleBtn = formSide.querySelector('#toggle-btn');
     const errorMsg = formSide.querySelector('#error-msg');
-    const btn = form.querySelector('button');
+    const btn = form.querySelector('button[type="submit"]');
+    const fillAdminBtn = formSide.querySelector('#fill-admin-btn');
+
+    if (fillAdminBtn) {
+      fillAdminBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const emailInput = form.querySelector('#auth-email-input');
+        const passInput = form.querySelector('#auth-password-input');
+        if (emailInput && passInput) {
+          emailInput.value = 'admin@admin.com';
+          passInput.value = 'admin';
+          emailInput.style.borderBottomColor = 'var(--color-gold)';
+          passInput.style.borderBottomColor = 'var(--color-gold)';
+        }
+      });
+    }
 
     // Input Focus Effects
     form.querySelectorAll('input').forEach(input => {
@@ -147,25 +175,30 @@ export const Auth = () => {
 
         // Loading State
         const originalText = btn.innerHTML;
-        btn.innerHTML = 'Processing...';
+        btn.innerHTML = 'Verifying...';
         btn.disabled = true;
         errorMsg.style.display = 'none';
 
         setTimeout(() => {
             try {
                 if (isLogin) {
-                    actions.login(email, password);
+                    const loggedIn = actions.login(email, password);
+                    if (loggedIn && loggedIn.role === 'admin') {
+                        navigate('/admin');
+                    } else {
+                        navigate('/dashboard');
+                    }
                 } else {
                     actions.register(email, password, phone, location);
+                    navigate('/dashboard');
                 }
-                navigate('/dashboard');
             } catch (err) {
                 errorMsg.innerText = err.message;
                 errorMsg.style.display = 'block';
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
-        }, 1500);
+        }, 500);
     });
   };
 
